@@ -1,5 +1,6 @@
+import re
 import requests
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Tag
 
 
 class MVVLine:
@@ -10,6 +11,7 @@ class MVVLine:
 
     def __str__(self):
         return "{} {} {}".format(self.line, self.direction, self.duration)
+
 
 class MyRequest:
     def __init__(self, station):
@@ -33,7 +35,6 @@ class MVVParser:
         self.station = None
         self.current_time = None
 
-
     def get_routes(self):
         all_tr = self.soup.find_all(tag_is_line)
         routes = []
@@ -50,6 +51,21 @@ class MVVParser:
                         line.duration = child.contents[0].strip()
             routes.append(line)
         return routes
+
+
+class Stations:
+    URL_TEMPLATE = "https://www.mvg-live.de/ims/dfiStaticAuswahl.svc?haltestelle={}"
+    def __init__(self):
+        self.stations = []
+
+    def get_stations(self):
+        for i in range(ord('a'), ord('z')+1):
+            req = requests.get(self.URL_TEMPLATE.format(chr(i)))
+            soup = BeautifulSoup(req.content, "html.parser")
+            links = soup.find_all(href=re.compile("/ims/dfiStaticAnzeige"))
+            stations = [elem.contents[0].strip() for elem in links]
+            self.stations.extend(stations)
+
 
 
 def tag_is_line(tag):
