@@ -14,12 +14,20 @@ class MVVLine:
 
 
 class MyRequest:
+    TRAFO = {
+        'Ä': '%C4', 'Ö': '%D6', 'Ü': '%DC',
+        'ä': '%E4', 'ö': '%F6', 'ü': '%FC',
+        'ß': '%DF', ' ': '+'
+    }
     def __init__(self, station):
-        self.payload = {'haltestelle': station,
-                        'ubahn': '', 'sbahn': '',
-                        'bus': '',
-                        'tram': ''}
-        r = requests.get('https://www.mvg-live.de/ims/dfiStaticAnzeige.svc', params=self.payload)
+        self.station = station
+        payload_station = [self.TRAFO.get(c) if c in self.TRAFO.keys() else c
+                           for c in station]
+        payload_station = str.encode(''.join(payload_station))
+        self.payload = {'ubahn': '', 'sbahn': '',
+                        'bus': '', 'tram': ''}
+        r = requests.get(b'https://www.mvg-live.de/ims/dfiStaticAnzeige.svc?haltestelle=' + payload_station,
+                         params=self.payload)
         self.status = r.status_code
         self.url = r.url
         self.contenttype = r.headers['content-type']
